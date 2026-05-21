@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+  <title>Quadratic Factoring Quiz</title>
+
+  <!-- EmailJS -->
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+
+  <script>
+    // YOUR PUBLIC KEY (added)
+    emailjs.init("kVGPSGDAkEA6Vlrxh");
+  </script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f7fb;
+      display: flex;
+      justify-content: center;
+      padding-top: 40px;
+    }
+
+    .quiz-box {
+      background: white;
+      width: 500px;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+      text-align: center;
+    }
+
+    .question {
+      font-size: 24px;
+      margin: 20px 0;
+      text-align: center;
+      font-weight: bold;
+    }
+
+    .option {
+      display: block;
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border: none;
+      border-radius: 8px;
+      background: #e8edf5;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    .option:hover {
+      background: #d6e3ff;
+    }
+
+    .correct {
+      background: #4CAF50 !important;
+      color: white;
+    }
+
+    .wrong {
+      background: #f44336 !important;
+      color: white;
+    }
+
+    .info {
+      text-align: center;
+      margin-top: 15px;
+      font-size: 18px;
+    }
+
+    .next-btn {
+      width: 100%;
+      padding: 12px;
+      margin-top: 15px;
+      border: none;
+      background: #007bff;
+      color: white;
+      border-radius: 8px;
+      cursor: pointer;
+      display: none;
+    }
+
+    .final {
+      text-align: center;
+      font-size: 22px;
+      margin-top: 20px;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 15px;
+      font-size: 16px;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="quiz-box">
+
+  <h1>Quadratic Factoring Quiz</h1>
+
+  <input id="studentName" placeholder="Enter your name"/>
+
+  <div class="question" id="question"></div>
+  <div id="options"></div>
+
+  <div class="info" id="info"></div>
+
+  <button class="next-btn" id="nextBtn">Next</button>
+</div>
+
+<script>
+
+let score = 0;
+let currentQ = 0;
+const total = 5;
+let correctIndex = 0;
+let correctAnswer = "";
+
+function rand(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function factor(n) {
+  if (n > 0) return `(x + ${n})`;
+  if (n < 0) return `(x - ${Math.abs(n)})`;
+  return `(x)`;
+}
+
+function generate() {
+
+  let a = rand(-9, 9);
+  let b = rand(-9, 9);
+
+  while (a === 0 && b === 0) {
+    a = rand(-9, 9);
+    b = rand(-9, 9);
+  }
+
+  let mid = a + b;
+  let c = a * b;
+
+  let q = "x² ";
+
+  if (mid > 0) q += `+ ${mid}x `;
+  else if (mid < 0) q += `- ${Math.abs(mid)}x `;
+
+  if (c > 0) q += `+ ${c}`;
+  else if (c < 0) q += `- ${Math.abs(c)}`;
+
+  correctAnswer = factor(a) + factor(b);
+
+  let opts = new Set();
+  opts.add(correctAnswer);
+
+  while (opts.size < 4) {
+    opts.add(factor(rand(-9, 9)) + factor(rand(-9, 9)));
+  }
+
+  opts = Array.from(opts).sort(() => Math.random() - 0.5);
+
+  correctIndex = opts.indexOf(correctAnswer);
+
+  return { q, opts };
+}
+
+function load() {
+
+  document.getElementById("info").innerHTML = "";
+  document.getElementById("nextBtn").style.display = "none";
+
+  const data = generate();
+
+  document.getElementById("question").innerText =
+    "Factor: " + data.q;
+
+  const div = document.getElementById("options");
+  div.innerHTML = "";
+
+  data.opts.forEach((opt, i) => {
+
+    const b = document.createElement("button");
+    b.className = "option";
+    b.innerText = opt;
+
+    b.onclick = () => check(i, b);
+
+    div.appendChild(b);
+  });
+}
+
+function check(i, btn) {
+
+  const all = document.querySelectorAll(".option");
+  all.forEach(b => b.disabled = true);
+
+  if (i === correctIndex) {
+    btn.classList.add("correct");
+    score++;
+    document.getElementById("info").innerText = "Correct!";
+  } else {
+    btn.classList.add("wrong");
+    all[correctIndex].classList.add("correct");
+    document.getElementById("info").innerText = "Wrong!";
+  }
+
+  document.getElementById("nextBtn").style.display = "block";
+}
+
+document.getElementById("nextBtn").onclick = () => {
+
+  currentQ++;
+
+  if (currentQ < total) load();
+  else finish();
+};
+
+function sendEmail() {
+
+  const name = document.getElementById("studentName").value;
+
+  emailjs.send(
+    "service_tk6qy4j",
+    "template_krl2rto",
+    {
+      to_email: "skandasa2003@gmail.com",
+      student_name: name,
+      score: score,
+      total: total,
+      message: `${name} scored ${score}/${total}`
+    }
+  )
+  .then(res => {
+    console.log("SUCCESS:", res);
+    alert("Email sent!");
+  })
+  .catch(err => {
+    console.log("FULL ERROR:", err);
+    alert("FAILED: check console (F12)");
+  });
+
+}
+function finish() {
+
+  sendEmail();
+
+  document.querySelector(".quiz-box").innerHTML = `
+    <div class="final">
+      Quiz Finished!<br><br>
+      Score: ${score}/${total}<br><br>
+      Email sent (check inbox/spam)
+    </div>
+  `;
+}
+
+load();
+
+</script>
+
+</body>
+</html>
