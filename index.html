@@ -103,33 +103,28 @@ let total = 5;
 let qCount = 0;
 let correctIndex = 0;
 let correctAnswer = "";
+
+/* ✅ GLOBAL TRACKERS */
 let copyCount = 0;
 let pasteCount = 0;
 let tabSwitches = 0;
 
-document.addEventListener("copy", () => copyCount++);
-document.addEventListener("paste", () => pasteCount++);
+/* tracking events */
+document.addEventListener("copy", () => {
+  copyCount++;
+});
+
+document.addEventListener("paste", () => {
+  pasteCount++;
+});
 
 document.addEventListener("visibilitychange", () => {
   if (document.hidden) tabSwitches++;
 });
-  
+
 function rand(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
-
-function factor(n) {
-  if (n > 0) return `(x + ${n})`;
-  if (n < 0) return `(x - ${Math.abs(n)})`;
-  return `(x)`;
-}
-
-/*
-  RULES IMPLEMENTED:
-  1. No B = 0 or D = 0 → avoids missing x terms
-  2. No 0 coefficient quadratics
-  3. Built from proper factored form (so GCF is inherently handled)
-*/
 
 function generate() {
 
@@ -138,35 +133,23 @@ function generate() {
   let a, b, c, d;
 
   if (type === 0) {
-    // MONIC: (x+a)(x+b)
-
+    // MONIC
     do {
       a = rand(-9, 9);
       b = rand(-9, 9);
-    } while (
-      a === 0 ||
-      b === 0 ||
-      a === -b   // ❗ prevents 0x (critical fix)
-    );
+    } while (a === 0 || b === 0 || a === -b);
 
     c = 1;
     d = 1;
 
   } else {
-    // NON-MONIC: (ax+b)(cx+d)
-
+    // NON-MONIC
     do {
       a = rand(1, 5);
       c = rand(1, 5);
-
       b = rand(-6, 6);
       d = rand(-6, 6);
-
-    } while (
-      b === 0 ||
-      d === 0 ||
-      (a * d + b * c === 0)  // ❗ prevents 0x
-    );
+    } while (b === 0 || d === 0 || (a * d + b * c === 0));
   }
 
   let A = a * c;
@@ -190,12 +173,11 @@ function generate() {
 
   while (opts.size < 4) {
 
-    let ra = rand(1, 5);
-    let rc = rand(1, 5);
-
-    let rb, rd;
+    let ra, rc, rb, rd;
 
     do {
+      ra = rand(1, 5);
+      rc = rand(1, 5);
       rb = rand(-6, 6);
       rd = rand(-6, 6);
     } while (rb === 0 || rd === 0);
@@ -207,7 +189,6 @@ function generate() {
   }
 
   opts = Array.from(opts).sort(() => Math.random() - 0.5);
-
   correctIndex = opts.indexOf(correctAnswer);
 
   return { q, opts };
@@ -276,6 +257,9 @@ function sendEmail() {
       student_name: name,
       score: score,
       total: total,
+      copy_attempts: copyCount,
+      paste_attempts: pasteCount,
+      tab_switches: tabSwitches,
       message: `${name} scored ${score}/${total}`
     }
   );
