@@ -1,126 +1,57 @@
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-
-  <title>Quadratic Factoring Quiz</title>
-
-  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-
-  <script>
-    emailjs.init("kVGPSGDAkEA6Vlrxh");
-  </script>
-
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f4f7fb;
-      display: flex;
-      justify-content: center;
-      padding-top: 40px;
-    }
-
-    .quiz-box {
-      background: white;
-      width: 520px;
-      padding: 30px;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    }
-
-    h1 { text-align: center; }
-
-    .question {
-      font-size: 22px;
-      text-align: center;
-      margin: 20px 0;
-      font-weight: bold;
-    }
-
-    .option {
-      width: 100%;
-      padding: 12px;
-      margin: 8px 0;
-      border: none;
-      border-radius: 8px;
-      background: #e8edf5;
-      cursor: pointer;
-      font-size: 16px;
-    }
-
-    .option:hover { background: #d6e3ff; }
-
-    .correct { background: green !important; color: white; }
-    .wrong { background: red !important; color: white; }
-
-    .info {
-      text-align: center;
-      margin-top: 10px;
-      font-size: 18px;
-    }
-
-    .next-btn {
-      width: 100%;
-      padding: 12px;
-      margin-top: 15px;
-      border: none;
-      background: #007bff;
-      color: white;
-      border-radius: 8px;
-      display: none;
-      cursor: pointer;
-    }
-
-    input {
-      width: 100%;
-      padding: 10px;
-      margin-bottom: 15px;
-    }
-  </style>
-</head>
-
-<body>
-
-<div class="quiz-box">
-
-  <h1>Quadratic Factoring Quiz</h1>
-
-  <input id="studentName" placeholder="Enter your name"/>
-
-  <div class="question" id="question"></div>
-  <div id="options"></div>
-  <div class="info" id="info"></div>
-
-  <button class="next-btn" id="nextBtn">Next</button>
-</div>
-
-<script>
-
 let score = 0;
 let total = 5;
 let qCount = 0;
 let correctIndex = 0;
 let correctAnswer = "";
 
-/* ✅ GLOBAL TRACKERS */
+/* 🔥 cheating / behavior tracking */
 let copyCount = 0;
 let pasteCount = 0;
 let tabSwitches = 0;
+let refreshCount = 0;
+let hasRestarted = false;
 
-/* tracking events */
-document.addEventListener("copy", () => {
-  copyCount++;
+/* -------------------------
+   DETECT REFRESH / RESTART
+--------------------------*/
+
+// check if user has visited before
+if (localStorage.getItem("quiz_started") === "true") {
+  hasRestarted = true;
+}
+
+// mark as started
+localStorage.setItem("quiz_started", "true");
+
+// track refreshes
+window.addEventListener("beforeunload", () => {
+  let count = parseInt(localStorage.getItem("refresh_count") || "0");
+  localStorage.setItem("refresh_count", count + 1);
 });
 
-document.addEventListener("paste", () => {
-  pasteCount++;
-});
+/* -------------------------
+   EVENT TRACKING
+--------------------------*/
+
+document.addEventListener("copy", () => copyCount++);
+document.addEventListener("paste", () => pasteCount++);
 
 document.addEventListener("visibilitychange", () => {
   if (document.hidden) tabSwitches++;
 });
+
+/* -------------------------
+   RESET STORAGE ON FINISH
+--------------------------*/
+
+function clearSession() {
+  localStorage.removeItem("quiz_started");
+  localStorage.removeItem("refresh_count");
+}
+
+/* -------------------------
+   QUIZ LOGIC (UNCHANGED CORE)
+--------------------------*/
 
 function rand(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -133,7 +64,6 @@ function generate() {
   let a, b, c, d;
 
   if (type === 0) {
-    // MONIC
     do {
       a = rand(-9, 9);
       b = rand(-9, 9);
@@ -143,7 +73,6 @@ function generate() {
     d = 1;
 
   } else {
-    // NON-MONIC
     do {
       a = rand(1, 5);
       c = rand(1, 5);
@@ -238,9 +167,7 @@ function check(i, btn) {
 }
 
 document.getElementById("nextBtn").onclick = () => {
-
   qCount++;
-
   if (qCount < total) load();
   else finish();
 };
@@ -248,6 +175,7 @@ document.getElementById("nextBtn").onclick = () => {
 function sendEmail() {
 
   const name = document.getElementById("studentName").value;
+  const storedRefresh = localStorage.getItem("refresh_count") || 0;
 
   emailjs.send(
     "service_tk6qy4j",
@@ -260,6 +188,8 @@ function sendEmail() {
       copy_attempts: copyCount,
       paste_attempts: pasteCount,
       tab_switches: tabSwitches,
+      refresh_count: storedRefresh,
+      restarted: hasRestarted ? "YES" : "NO",
       message: `${name} scored ${score}/${total}`
     }
   );
@@ -268,6 +198,7 @@ function sendEmail() {
 function finish() {
 
   sendEmail();
+  clearSession();
 
   document.querySelector(".quiz-box").innerHTML = `
     <div style="text-align:center;font-size:22px;">
@@ -279,8 +210,3 @@ function finish() {
 }
 
 load();
-
-</script>
-
-</body>
-</html>
