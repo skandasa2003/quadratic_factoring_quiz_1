@@ -124,13 +124,17 @@ function rand(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-/* ---------------- FORMAT FACTOR ---------------- */
+/* ---------------- FIXED FACTOR FORMAT ---------------- */
 function formatFactor(a, b) {
 
-  // 🔥 remove 1x
-  let aPart = (a === 1) ? "x" : (a === -1) ? "-x" : `${a}x`;
+  // ✔ handle negative leading coefficient
+  if (a < 0) {
+    return "-(" + formatFactor(-a, -b).slice(1, -1) + ")";
+  }
 
-  // clean constant
+  // ✔ remove 1x
+  let aPart = (a === 1) ? "x" : `${a}x`;
+
   let bPart = b >= 0 ? `+ ${b}` : `- ${Math.abs(b)}`;
 
   return `(${aPart} ${bPart})`;
@@ -144,7 +148,6 @@ function generate() {
   let a, b, c, d;
 
   if (type === 0) {
-    // MONIC
     do {
       a = rand(-9, 9);
       b = rand(-9, 9);
@@ -154,7 +157,6 @@ function generate() {
     d = 1;
 
   } else {
-    // NON-MONIC
     do {
       a = rand(1, 5);
       c = rand(1, 5);
