@@ -24,13 +24,15 @@
 
     .quiz-box {
       background: white;
-      width: 520px;
+      width: 560px;
       padding: 30px;
       border-radius: 12px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
 
-    h1 { text-align: center; }
+    h1 {
+      text-align: center;
+    }
 
     .question {
       font-size: 22px;
@@ -50,10 +52,19 @@
       font-size: 16px;
     }
 
-    .option:hover { background: #d6e3ff; }
+    .option:hover {
+      background: #d6e3ff;
+    }
 
-    .correct { background: green !important; color: white; }
-    .wrong { background: red !important; color: white; }
+    .correct {
+      background: green !important;
+      color: white;
+    }
+
+    .wrong {
+      background: red !important;
+      color: white;
+    }
 
     .info {
       text-align: center;
@@ -77,6 +88,7 @@
       width: 100%;
       padding: 10px;
       margin-bottom: 15px;
+      font-size: 16px;
     }
   </style>
 </head>
@@ -90,37 +102,53 @@
   <input id="studentName" placeholder="Enter your name"/>
 
   <div class="question" id="question"></div>
+
   <div id="options"></div>
+
   <div class="info" id="info"></div>
 
   <button class="next-btn" id="nextBtn">Next</button>
+
 </div>
 
 <script>
 
 /* ---------------- STATE ---------------- */
+
 let score = 0;
 let total = 5;
 let qCount = 0;
+
 let correctIndex = 0;
 let correctAnswer = "";
+let currentQuestion = "";
+
+/* stores all question results */
+let resultsLog = [];
 
 /* ---------------- TRACKING ---------------- */
+
 let copyCount = 0;
 let pasteCount = 0;
 let tabSwitches = 0;
 
 /* restart detection */
-let hasRestarted = sessionStorage.getItem("quiz_started") === "true";
+let hasRestarted =
+  sessionStorage.getItem("quiz_started") === "true";
+
 sessionStorage.setItem("quiz_started", "true");
 
-/* refresh counter (FIXED + STABLE) */
-let refreshCount = parseInt(sessionStorage.getItem("refresh_count") || "0");
+/* refresh counter */
+let refreshCount =
+  parseInt(sessionStorage.getItem("refresh_count") || "0");
+
 refreshCount++;
+
 sessionStorage.setItem("refresh_count", refreshCount);
 
-/* events */
+/* track events */
 document.addEventListener("copy", () => copyCount++);
+
 document.addEventListener("paste", () => pasteCount++);
 
 document.addEventListener("visibilitychange", () => {
@@ -128,48 +156,80 @@ document.addEventListener("visibilitychange", () => {
 });
 
 /* ---------------- HELPERS ---------------- */
+
 function rand(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-/* ---------------- FACTOR FORMAT (FIXED) ---------------- */
+/* ---------------- FACTOR FORMAT ---------------- */
+
 function formatFactor(a, b) {
 
-  // leading negative → factor out -1
+  /* factor out negative */
   if (a < 0) {
-    let inner = formatFactor(-a, -b);
+
+    let inner =
+      formatFactor(-a, -b);
+
     return "-(" + inner.slice(1, -1) + ")";
   }
 
-  let aPart = (a === 1) ? "x" : `${a}x`;
-  let bPart = b >= 0 ? `+ ${b}` : `- ${Math.abs(b)}`;
+  /* remove 1x */
+  let aPart =
+    (a === 1)
+      ? "x"
+      : `${a}x`;
+
+  let bPart =
+    b >= 0
+      ? `+ ${b}`
+      : `- ${Math.abs(b)}`;
 
   return `(${aPart} ${bPart})`;
 }
 
-/* ---------------- GENERATE ---------------- */
+/* ---------------- GENERATE QUESTION ---------------- */
+
 function generate() {
 
   let type = rand(0, 1);
 
   let a, b, c, d;
 
+  /* monic */
   if (type === 0) {
+
     do {
+
       a = rand(-9, 9);
       b = rand(-9, 9);
-    } while (a === 0 || b === 0 || a === -b);
+
+    } while (
+      a === 0 ||
+      b === 0 ||
+      a === -b
+    );
 
     c = 1;
     d = 1;
 
   } else {
+
+    /* non-monic */
+
     do {
+
       a = rand(1, 5);
       c = rand(1, 5);
+
       b = rand(-6, 6);
       d = rand(-6, 6);
-    } while (b === 0 || d === 0 || (a * d + b * c === 0));
+
+    } while (
+      b === 0 ||
+      d === 0 ||
+      (a * d + b * c === 0)
+    );
   }
 
   let A = a * c;
@@ -178,15 +238,24 @@ function generate() {
 
   let q = `${A}x² `;
 
-  if (B > 0) q += `+ ${B}x `;
-  else q += `- ${Math.abs(B)}x `;
+  if (B > 0)
+    q += `+ ${B}x `;
+  else
+    q += `- ${Math.abs(B)}x `;
 
-  if (C > 0) q += `+ ${C}`;
-  else q += `- ${Math.abs(C)}`;
+  if (C > 0)
+    q += `+ ${C}`;
+  else
+    q += `- ${Math.abs(C)}`;
 
-  correctAnswer = formatFactor(a, b) + formatFactor(c, d);
+  currentQuestion = q;
+
+  correctAnswer =
+    formatFactor(a, b) +
+    formatFactor(c, d);
 
   let opts = new Set();
+
   opts.add(correctAnswer);
 
   while (opts.size < 4) {
@@ -194,39 +263,60 @@ function generate() {
     let ra, rc, rb, rd;
 
     do {
+
       ra = rand(1, 5);
       rc = rand(1, 5);
+
       rb = rand(-6, 6);
       rd = rand(-6, 6);
-    } while (rb === 0 || rd === 0);
 
-    opts.add(formatFactor(ra, rb) + formatFactor(rc, rd));
+    } while (
+      rb === 0 ||
+      rd === 0
+    );
+
+    opts.add(
+      formatFactor(ra, rb) +
+      formatFactor(rc, rd)
+    );
   }
 
-  opts = Array.from(opts).sort(() => Math.random() - 0.5);
-  correctIndex = opts.indexOf(correctAnswer);
+  opts =
+    Array.from(opts)
+      .sort(() => Math.random() - 0.5);
+
+  correctIndex =
+    opts.indexOf(correctAnswer);
 
   return { q, opts };
 }
 
-/* ---------------- LOAD ---------------- */
+/* ---------------- LOAD QUESTION ---------------- */
+
 function load() {
 
   document.getElementById("info").innerHTML = "";
-  document.getElementById("nextBtn").style.display = "none";
+
+  document.getElementById("nextBtn").style.display =
+    "none";
 
   let data = generate();
 
   document.getElementById("question").innerText =
     "Factor: " + data.q;
 
-  let div = document.getElementById("options");
+  let div =
+    document.getElementById("options");
+
   div.innerHTML = "";
 
   data.opts.forEach((opt, i) => {
 
-    let b = document.createElement("button");
+    let b =
+      document.createElement("button");
+
     b.className = "option";
+
     b.innerText = opt;
 
     b.onclick = () => check(i, b);
@@ -235,56 +325,133 @@ function load() {
   });
 }
 
-/* ---------------- CHECK ---------------- */
+/* ---------------- CHECK ANSWER ---------------- */
+
 function check(i, btn) {
 
-  let all = document.querySelectorAll(".option");
+  let all =
+    document.querySelectorAll(".option");
+
   all.forEach(b => b.disabled = true);
 
+  let wasCorrect = false;
+
+  let studentAnswer =
+    all[i].innerText;
+
   if (i === correctIndex) {
+
     btn.classList.add("correct");
+
     score++;
-    document.getElementById("info").innerText = "Correct!";
+
+    wasCorrect = true;
+
+    document.getElementById("info").innerText =
+      "Correct!";
+
   } else {
+
     btn.classList.add("wrong");
+
     all[correctIndex].classList.add("correct");
-    document.getElementById("info").innerText = "Wrong!";
+
+    document.getElementById("info").innerText =
+      "Wrong!";
   }
 
-  document.getElementById("nextBtn").style.display = "block";
+  /* save result */
+
+  resultsLog.push({
+
+    question: currentQuestion,
+
+    studentAnswer: studentAnswer,
+
+    correctAnswer: correctAnswer,
+
+    correct: wasCorrect
+  });
+
+  document.getElementById("nextBtn").style.display =
+    "block";
 }
 
-/* ---------------- NAV ---------------- */
+/* ---------------- NEXT BUTTON ---------------- */
+
 document.getElementById("nextBtn").onclick = () => {
+
   qCount++;
-  if (qCount < total) load();
-  else finish();
+
+  if (qCount < total)
+    load();
+  else
+    finish();
 };
 
-/* ---------------- EMAIL ---------------- */
+/* ---------------- SEND EMAIL ---------------- */
+
 function sendEmail() {
 
-  const name = document.getElementById("studentName").value;
+  const name =
+    document.getElementById("studentName").value;
+
+  let detailedResults = "";
+
+  resultsLog.forEach((r, index) => {
+
+    detailedResults +=
+
+`Question ${index + 1}:
+${r.question}
+
+Student Answer:
+${r.studentAnswer}
+
+Correct Answer:
+${r.correctAnswer}
+
+Result:
+${r.correct ? "Correct" : "Wrong"}
+
+-----------------------------------
+
+`;
+  });
 
   emailjs.send(
     "service_tk6qy4j",
     "template_krl2rto",
     {
       to_email: "skandasa2003@gmail.com",
+
       student_name: name,
+
       score: score,
+
       total: total,
+
       copy_attempts: copyCount,
+
       paste_attempts: pasteCount,
+
       tab_switches: tabSwitches,
+
       refresh_count: refreshCount,
-      restarted: hasRestarted ? "YES" : "NO",
-      message: `${name} scored ${score}/${total}`
+
+      restarted:
+        hasRestarted ? "YES" : "NO",
+
+      detailed_results: detailedResults,
+
+      message:
+        `${name} scored ${score}/${total}`
     }
   );
 }
 
 /* ---------------- FINISH ---------------- */
+
 function finish() {
 
   sendEmail();
@@ -292,11 +459,15 @@ function finish() {
   document.querySelector(".quiz-box").innerHTML = `
     <div style="text-align:center;font-size:22px;">
       Quiz Finished<br><br>
+
       Score: ${score}/${total}<br><br>
+
       Email sent
     </div>
   `;
 }
+
+/* start quiz */
 
 load();
 
