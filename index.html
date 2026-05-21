@@ -194,6 +194,195 @@ function formatFactor(a, b) {
 
 /* ---------------- GENERATE QUESTION ---------------- */
 
+  <!-- REPLACE ONLY YOUR generate() FUNCTION WITH THIS -->
+
+<script>
+
+function generate2() {
+
+  let questionType = rand(1, 4);
+
+  let q = "";
+  let opts = [];
+
+  /* ------------------------------------------------ */
+  /* TYPE 1: STANDARD FACTORING                      */
+  /* ------------------------------------------------ */
+
+  if (questionType === 1) {
+
+    let a, b, c, d;
+
+    do {
+
+      a = rand(1, 5);
+      c = rand(1, 5);
+
+      b = rand(-6, 6);
+      d = rand(-6, 6);
+
+    } while (
+      b === 0 ||
+      d === 0 ||
+      (a * d + b * c === 0)
+    );
+
+    let A = a * c;
+    let B = a * d + b * c;
+    let C = b * d;
+
+    q = `${A}x² `;
+
+    if (B > 0)
+      q += `+ ${B}x `;
+    else
+      q += `- ${Math.abs(B)}x `;
+
+    if (C > 0)
+      q += `+ ${C}`;
+    else
+      q += `- ${Math.abs(C)}`;
+
+    correctAnswer =
+      formatFactor(a, b) +
+      formatFactor(c, d);
+  }
+
+  /* ------------------------------------------------ */
+  /* TYPE 2: PERFECT SQUARES                         */
+  /* ------------------------------------------------ */
+
+  else if (questionType === 2) {
+
+    let a = rand(1, 6);
+    let b = rand(1, 9);
+
+    let A = a * a;
+    let B = 2 * a * b;
+    let C = b * b;
+
+    let plus = rand(0, 1);
+
+    if (plus === 1) {
+
+      q =
+        `${A}x² + ${B}x + ${C}`;
+
+      correctAnswer =
+        `${formatFactor(a, b)}${formatFactor(a, b)}`;
+
+    } else {
+
+      q =
+        `${A}x² - ${B}x + ${C}`;
+
+      correctAnswer =
+        `${formatFactor(a, -b)}${formatFactor(a, -b)}`;
+    }
+  }
+
+  /* ------------------------------------------------ */
+  /* TYPE 3: DIFFERENCE OF SQUARES                   */
+  /* ------------------------------------------------ */
+
+  else if (questionType === 3) {
+
+    let a = rand(1, 8);
+    let b = rand(1, 12);
+
+    let A = a * a;
+    let C = b * b;
+
+    q =
+      `${A}x² - ${C}`;
+
+    correctAnswer =
+      `${formatFactor(a, b)}${formatFactor(a, -b)}`;
+  }
+
+  /* ------------------------------------------------ */
+  /* TYPE 4: GCF + FACTORING                         */
+  /* ------------------------------------------------ */
+
+  else {
+
+    let gcf = rand(2, 6);
+
+    let a = rand(1, 4);
+    let c = rand(1, 4);
+
+    let b = rand(-5, 5);
+    let d = rand(-5, 5);
+
+    while (
+      b === 0 ||
+      d === 0 ||
+      (a * d + b * c === 0)
+    ) {
+
+      b = rand(-5, 5);
+      d = rand(-5, 5);
+    }
+
+    let A = gcf * a * c;
+    let B = gcf * (a * d + b * c);
+    let C = gcf * b * d;
+
+    q = `${A}x² `;
+
+    if (B > 0)
+      q += `+ ${B}x `;
+    else
+      q += `- ${Math.abs(B)}x `;
+
+    if (C > 0)
+      q += `+ ${C}`;
+    else
+      q += `- ${Math.abs(C)}`;
+
+    correctAnswer =
+      `${gcf}` +
+      formatFactor(a, b) +
+      formatFactor(c, d);
+  }
+
+  /* ------------------------------------------------ */
+  /* GENERATE WRONG OPTIONS                          */
+  /* ------------------------------------------------ */
+
+  let options = new Set();
+
+  options.add(correctAnswer);
+
+  while (options.size < 4) {
+
+    let ra = rand(1, 5);
+    let rb = rand(-6, 6);
+    let rc = rand(1, 5);
+    let rd = rand(-6, 6);
+
+    if (rb === 0 || rd === 0)
+      continue;
+
+    let wrong =
+      formatFactor(ra, rb) +
+      formatFactor(rc, rd);
+
+    options.add(wrong);
+  }
+
+  opts =
+    Array.from(options)
+      .sort(() => Math.random() - 0.5);
+
+  correctIndex =
+    opts.indexOf(correctAnswer);
+
+  currentQuestion = q;
+
+  return { q, opts };
+}
+  
 function generate() {
 
   let type = rand(0, 1);
@@ -305,7 +494,7 @@ function load() {
   document.getElementById("nextBtn").style.display =
     "none";
 
-  let data = generate();
+  let data = generate2();
 
   document.getElementById("question").innerText =
     "Factor: " + data.q;
