@@ -98,44 +98,45 @@
 
 <script>
 
-/* -------------------------
-   CORE QUIZ STATE
---------------------------*/
+/* ---------------- STATE ---------------- */
 let score = 0;
 let total = 5;
 let qCount = 0;
 let correctIndex = 0;
 let correctAnswer = "";
 
-/* -------------------------
-   TRACKING (FIXED)
---------------------------*/
+/* ---------------- TRACKING ---------------- */
 let copyCount = 0;
 let pasteCount = 0;
 let tabSwitches = 0;
 
-/* restart detection (SAFE) */
 let hasRestarted = sessionStorage.getItem("quiz_started") === "true";
 sessionStorage.setItem("quiz_started", "true");
 
-/* event tracking */
 document.addEventListener("copy", () => copyCount++);
 document.addEventListener("paste", () => pasteCount++);
-
 document.addEventListener("visibilitychange", () => {
   if (document.hidden) tabSwitches++;
 });
 
-/* -------------------------
-   HELPERS
---------------------------*/
+/* ---------------- HELPERS ---------------- */
 function rand(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-/* -------------------------
-   QUESTION GENERATOR
---------------------------*/
+/* ---------------- FORMAT FACTOR ---------------- */
+function formatFactor(a, b) {
+
+  // 🔥 remove 1x
+  let aPart = (a === 1) ? "x" : (a === -1) ? "-x" : `${a}x`;
+
+  // clean constant
+  let bPart = b >= 0 ? `+ ${b}` : `- ${Math.abs(b)}`;
+
+  return `(${aPart} ${bPart})`;
+}
+
+/* ---------------- GENERATE ---------------- */
 function generate() {
 
   let type = rand(0, 1);
@@ -143,6 +144,7 @@ function generate() {
   let a, b, c, d;
 
   if (type === 0) {
+    // MONIC
     do {
       a = rand(-9, 9);
       b = rand(-9, 9);
@@ -152,6 +154,7 @@ function generate() {
     d = 1;
 
   } else {
+    // NON-MONIC
     do {
       a = rand(1, 5);
       c = rand(1, 5);
@@ -172,9 +175,7 @@ function generate() {
   if (C > 0) q += `+ ${C}`;
   else q += `- ${Math.abs(C)}`;
 
-  correctAnswer =
-    `(${a}x ${b >= 0 ? '+ ' + b : '- ' + Math.abs(b)})` +
-    `(${c}x ${d >= 0 ? '+ ' + d : '- ' + Math.abs(d)})`;
+  correctAnswer = formatFactor(a, b) + formatFactor(c, d);
 
   let opts = new Set();
   opts.add(correctAnswer);
@@ -190,10 +191,7 @@ function generate() {
       rd = rand(-6, 6);
     } while (rb === 0 || rd === 0);
 
-    opts.add(
-      `(${ra}x ${rb >= 0 ? '+ ' + rb : '- ' + Math.abs(rb)})` +
-      `(${rc}x ${rd >= 0 ? '+ ' + rd : '- ' + Math.abs(rd)})`
-    );
+    opts.add(formatFactor(ra, rb) + formatFactor(rc, rd));
   }
 
   opts = Array.from(opts).sort(() => Math.random() - 0.5);
@@ -202,9 +200,7 @@ function generate() {
   return { q, opts };
 }
 
-/* -------------------------
-   LOAD QUESTION
---------------------------*/
+/* ---------------- LOAD ---------------- */
 function load() {
 
   document.getElementById("info").innerHTML = "";
@@ -230,9 +226,7 @@ function load() {
   });
 }
 
-/* -------------------------
-   CHECK ANSWER
---------------------------*/
+/* ---------------- CHECK ---------------- */
 function check(i, btn) {
 
   let all = document.querySelectorAll(".option");
@@ -251,18 +245,14 @@ function check(i, btn) {
   document.getElementById("nextBtn").style.display = "block";
 }
 
-/* -------------------------
-   NAVIGATION
---------------------------*/
+/* ---------------- NAV ---------------- */
 document.getElementById("nextBtn").onclick = () => {
   qCount++;
   if (qCount < total) load();
   else finish();
 };
 
-/* -------------------------
-   EMAIL
---------------------------*/
+/* ---------------- EMAIL ---------------- */
 function sendEmail() {
 
   const name = document.getElementById("studentName").value;
@@ -284,9 +274,7 @@ function sendEmail() {
   );
 }
 
-/* -------------------------
-   FINISH
---------------------------*/
+/* ---------------- FINISH ---------------- */
 function finish() {
 
   sendEmail();
@@ -300,7 +288,6 @@ function finish() {
   `;
 }
 
-/* start */
 load();
 
 </script>
