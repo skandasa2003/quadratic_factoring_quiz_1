@@ -116,7 +116,7 @@
 /* ---------------- STATE ---------------- */
 
 let score = 0;
-let total = 5;
+let total = 10;
 let qCount = 0;
 
 let correctIndex = 0;
@@ -131,14 +131,10 @@ let copyCount = 0;
 let pasteCount = 0;
 let tabSwitches = 0;
 
-/* restart detection */
-
 let hasRestarted =
   sessionStorage.getItem("quiz_started") === "true";
 
 sessionStorage.setItem("quiz_started", "true");
-
-/* refresh counter */
 
 let refreshCount =
   parseInt(sessionStorage.getItem("refresh_count") || "0");
@@ -146,8 +142,6 @@ let refreshCount =
 refreshCount++;
 
 sessionStorage.setItem("refresh_count", refreshCount);
-
-/* tracking events */
 
 document.addEventListener("copy", () => copyCount++);
 
@@ -167,8 +161,6 @@ function rand(min, max) {
 
 function formatFactor(a, b) {
 
-  /* factor out leading negative */
-
   if (a < 0) {
 
     let inner =
@@ -176,8 +168,6 @@ function formatFactor(a, b) {
 
     return "-(" + inner.slice(1, -1) + ")";
   }
-
-  /* remove 1x */
 
   let aPart =
     (a === 1)
@@ -192,11 +182,83 @@ function formatFactor(a, b) {
   return `(${aPart} ${bPart})`;
 }
 
-/* ---------------- GENERATE QUESTION ---------------- */
+/* ========================================================= */
+/* OLD GENERATE FUNCTION                                     */
+/* ========================================================= */
 
-  <!-- REPLACE ONLY YOUR generate() FUNCTION WITH THIS -->
+function generate() {
 
-<script>
+  let a, b, c, d;
+
+  do {
+
+    a = rand(1, 5);
+    c = rand(1, 5);
+
+    b = rand(-6, 6);
+    d = rand(-6, 6);
+
+  } while (
+    b === 0 ||
+    d === 0 ||
+    (a * d + b * c === 0)
+  );
+
+  let A = a * c;
+  let B = a * d + b * c;
+  let C = b * d;
+
+  let q = `${A}x² `;
+
+  if (B > 0)
+    q += `+ ${B}x `;
+  else
+    q += `- ${Math.abs(B)}x `;
+
+  if (C > 0)
+    q += `+ ${C}`;
+  else
+    q += `- ${Math.abs(C)}`;
+
+  correctAnswer =
+    formatFactor(a, b) +
+    formatFactor(c, d);
+
+  let options = new Set();
+
+  options.add(correctAnswer);
+
+  while (options.size < 4) {
+
+    let ra = rand(1, 5);
+    let rb = rand(-6, 6);
+    let rc = rand(1, 5);
+    let rd = rand(-6, 6);
+
+    if (rb === 0 || rd === 0)
+      continue;
+
+    options.add(
+      formatFactor(ra, rb) +
+      formatFactor(rc, rd)
+    );
+  }
+
+  let opts =
+    Array.from(options)
+      .sort(() => Math.random() - 0.5);
+
+  correctIndex =
+    opts.indexOf(correctAnswer);
+
+  currentQuestion = q;
+
+  return { q, opts };
+}
+
+/* ========================================================= */
+/* NEW ADVANCED GENERATE2 FUNCTION                           */
+/* ========================================================= */
 
 function generate2() {
 
@@ -205,9 +267,7 @@ function generate2() {
   let q = "";
   let opts = [];
 
-  /* ------------------------------------------------ */
-  /* TYPE 1: STANDARD FACTORING                      */
-  /* ------------------------------------------------ */
+  /* STANDARD FACTORING */
 
   if (questionType === 1) {
 
@@ -248,9 +308,7 @@ function generate2() {
       formatFactor(c, d);
   }
 
-  /* ------------------------------------------------ */
-  /* TYPE 2: PERFECT SQUARES                         */
-  /* ------------------------------------------------ */
+  /* PERFECT SQUARES */
 
   else if (questionType === 2) {
 
@@ -281,9 +339,7 @@ function generate2() {
     }
   }
 
-  /* ------------------------------------------------ */
-  /* TYPE 3: DIFFERENCE OF SQUARES                   */
-  /* ------------------------------------------------ */
+  /* DIFFERENCE OF SQUARES */
 
   else if (questionType === 3) {
 
@@ -300,9 +356,7 @@ function generate2() {
       `${formatFactor(a, b)}${formatFactor(a, -b)}`;
   }
 
-  /* ------------------------------------------------ */
-  /* TYPE 4: GCF + FACTORING                         */
-  /* ------------------------------------------------ */
+  /* GCF FACTORING */
 
   else {
 
@@ -346,10 +400,6 @@ function generate2() {
       formatFactor(c, d);
   }
 
-  /* ------------------------------------------------ */
-  /* GENERATE WRONG OPTIONS                          */
-  /* ------------------------------------------------ */
-
   let options = new Set();
 
   options.add(correctAnswer);
@@ -364,11 +414,10 @@ function generate2() {
     if (rb === 0 || rd === 0)
       continue;
 
-    let wrong =
+    options.add(
       formatFactor(ra, rb) +
-      formatFactor(rc, rd);
-
-    options.add(wrong);
+      formatFactor(rc, rd)
+    );
   }
 
   opts =
@@ -382,108 +431,6 @@ function generate2() {
 
   return { q, opts };
 }
-  
-function generate() {
-
-  let type = rand(0, 1);
-
-  let a, b, c, d;
-
-  /* monic */
-
-  if (type === 0) {
-
-    do {
-
-      a = rand(-9, 9);
-      b = rand(-9, 9);
-
-    } while (
-      a === 0 ||
-      b === 0 ||
-      a === -b
-    );
-
-    c = 1;
-    d = 1;
-
-  } else {
-
-    /* non-monic */
-
-    do {
-
-      a = rand(1, 5);
-      c = rand(1, 5);
-
-      b = rand(-6, 6);
-      d = rand(-6, 6);
-
-    } while (
-      b === 0 ||
-      d === 0 ||
-      (a * d + b * c === 0)
-    );
-  }
-
-  let A = a * c;
-  let B = a * d + b * c;
-  let C = b * d;
-
-  let q = `${A}x² `;
-
-  if (B > 0)
-    q += `+ ${B}x `;
-  else
-    q += `- ${Math.abs(B)}x `;
-
-  if (C > 0)
-    q += `+ ${C}`;
-  else
-    q += `- ${Math.abs(C)}`;
-
-  currentQuestion = q;
-
-  correctAnswer =
-    formatFactor(a, b) +
-    formatFactor(c, d);
-
-  let opts = new Set();
-
-  opts.add(correctAnswer);
-
-  while (opts.size < 4) {
-
-    let ra, rc, rb, rd;
-
-    do {
-
-      ra = rand(1, 5);
-      rc = rand(1, 5);
-
-      rb = rand(-6, 6);
-      rd = rand(-6, 6);
-
-    } while (
-      rb === 0 ||
-      rd === 0
-    );
-
-    opts.add(
-      formatFactor(ra, rb) +
-      formatFactor(rc, rd)
-    );
-  }
-
-  opts =
-    Array.from(opts)
-      .sort(() => Math.random() - 0.5);
-
-  correctIndex =
-    opts.indexOf(correctAnswer);
-
-  return { q, opts };
-}
 
 /* ---------------- LOAD QUESTION ---------------- */
 
@@ -493,6 +440,8 @@ function load() {
 
   document.getElementById("nextBtn").style.display =
     "none";
+
+  /* USING generate2 NOW */
 
   let data = generate2();
 
@@ -553,8 +502,6 @@ function check(i, btn) {
     document.getElementById("info").innerText =
       "Wrong!";
   }
-
-  /* save result */
 
   resultsLog.push({
 
