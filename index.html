@@ -103,7 +103,17 @@ let total = 5;
 let qCount = 0;
 let correctIndex = 0;
 let correctAnswer = "";
+let copyCount = 0;
+let pasteCount = 0;
+let tabSwitches = 0;
 
+document.addEventListener("copy", () => copyCount++);
+document.addEventListener("paste", () => pasteCount++);
+
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) tabSwitches++;
+});
+  
 function rand(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
