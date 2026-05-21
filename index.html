@@ -110,11 +110,19 @@ let copyCount = 0;
 let pasteCount = 0;
 let tabSwitches = 0;
 
+/* restart detection */
 let hasRestarted = sessionStorage.getItem("quiz_started") === "true";
 sessionStorage.setItem("quiz_started", "true");
 
+/* refresh counter (FIXED + STABLE) */
+let refreshCount = parseInt(sessionStorage.getItem("refresh_count") || "0");
+refreshCount++;
+sessionStorage.setItem("refresh_count", refreshCount);
+
+/* events */
 document.addEventListener("copy", () => copyCount++);
 document.addEventListener("paste", () => pasteCount++);
+
 document.addEventListener("visibilitychange", () => {
   if (document.hidden) tabSwitches++;
 });
@@ -124,17 +132,16 @@ function rand(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-/* ---------------- FIXED FACTOR FORMAT ---------------- */
+/* ---------------- FACTOR FORMAT (FIXED) ---------------- */
 function formatFactor(a, b) {
 
-  // ✔ handle negative leading coefficient
+  // leading negative → factor out -1
   if (a < 0) {
-    return "-(" + formatFactor(-a, -b).slice(1, -1) + ")";
+    let inner = formatFactor(-a, -b);
+    return "-(" + inner.slice(1, -1) + ")";
   }
 
-  // ✔ remove 1x
   let aPart = (a === 1) ? "x" : `${a}x`;
-
   let bPart = b >= 0 ? `+ ${b}` : `- ${Math.abs(b)}`;
 
   return `(${aPart} ${bPart})`;
@@ -270,6 +277,7 @@ function sendEmail() {
       copy_attempts: copyCount,
       paste_attempts: pasteCount,
       tab_switches: tabSwitches,
+      refresh_count: refreshCount,
       restarted: hasRestarted ? "YES" : "NO",
       message: `${name} scored ${score}/${total}`
     }
