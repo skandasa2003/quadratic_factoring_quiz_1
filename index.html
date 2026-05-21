@@ -123,7 +123,6 @@ let correctIndex = 0;
 let correctAnswer = "";
 let currentQuestion = "";
 
-/* stores all question results */
 let resultsLog = [];
 
 /* ---------------- TRACKING ---------------- */
@@ -133,12 +132,14 @@ let pasteCount = 0;
 let tabSwitches = 0;
 
 /* restart detection */
+
 let hasRestarted =
   sessionStorage.getItem("quiz_started") === "true";
 
 sessionStorage.setItem("quiz_started", "true");
 
 /* refresh counter */
+
 let refreshCount =
   parseInt(sessionStorage.getItem("refresh_count") || "0");
 
@@ -146,7 +147,8 @@ refreshCount++;
 
 sessionStorage.setItem("refresh_count", refreshCount);
 
-/* track events */
+/* tracking events */
+
 document.addEventListener("copy", () => copyCount++);
 
 document.addEventListener("paste", () => pasteCount++);
@@ -165,7 +167,8 @@ function rand(min, max) {
 
 function formatFactor(a, b) {
 
-  /* factor out negative */
+  /* factor out leading negative */
+
   if (a < 0) {
 
     let inner =
@@ -175,6 +178,7 @@ function formatFactor(a, b) {
   }
 
   /* remove 1x */
+
   let aPart =
     (a === 1)
       ? "x"
@@ -197,6 +201,7 @@ function generate() {
   let a, b, c, d;
 
   /* monic */
+
   if (type === 0) {
 
     do {
@@ -396,6 +401,9 @@ function sendEmail() {
   const name =
     document.getElementById("studentName").value;
 
+  let percentage =
+    Math.round((score / total) * 100);
+
   let detailedResults = "";
 
   resultsLog.forEach((r, index) => {
@@ -431,6 +439,8 @@ ${r.correct ? "Correct" : "Wrong"}
 
       total: total,
 
+      percentage: percentage,
+
       copy_attempts: copyCount,
 
       paste_attempts: pasteCount,
@@ -445,7 +455,7 @@ ${r.correct ? "Correct" : "Wrong"}
       detailed_results: detailedResults,
 
       message:
-        `${name} scored ${score}/${total}`
+        `${name} scored ${score}/${total} (${percentage}%)`
     }
   );
 }
@@ -454,20 +464,27 @@ ${r.correct ? "Correct" : "Wrong"}
 
 function finish() {
 
+  let percentage =
+    Math.round((score / total) * 100);
+
   sendEmail();
 
   document.querySelector(".quiz-box").innerHTML = `
     <div style="text-align:center;font-size:22px;">
+
       Quiz Finished<br><br>
 
       Score: ${score}/${total}<br><br>
 
+      Final Mark: ${percentage}%<br><br>
+
       Email sent
+
     </div>
   `;
 }
 
-/* start quiz */
+/* ---------------- START QUIZ ---------------- */
 
 load();
 
