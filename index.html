@@ -130,13 +130,14 @@ function generate() {
   if (type === 0) {
     // MONIC: (x+a)(x+b)
 
-    a = rand(-9, 9);
-    b = rand(-9, 9);
-
-    while (a === 0 || b === 0 || (a + b === 0)) {
+    do {
       a = rand(-9, 9);
       b = rand(-9, 9);
-    }
+    } while (
+      a === 0 ||
+      b === 0 ||
+      a === -b   // ❗ prevents 0x (critical fix)
+    );
 
     c = 1;
     d = 1;
@@ -144,17 +145,18 @@ function generate() {
   } else {
     // NON-MONIC: (ax+b)(cx+d)
 
-    a = rand(1, 5);
-    c = rand(1, 5);
+    do {
+      a = rand(1, 5);
+      c = rand(1, 5);
 
-    b = rand(-6, 6);
-    d = rand(-6, 6);
-
-    // enforce NO zero linear terms
-    while (b === 0 || d === 0 || (a * d + b * c === 0)) {
       b = rand(-6, 6);
       d = rand(-6, 6);
-    }
+
+    } while (
+      b === 0 ||
+      d === 0 ||
+      (a * d + b * c === 0)  // ❗ prevents 0x
+    );
   }
 
   let A = a * c;
@@ -180,10 +182,13 @@ function generate() {
 
     let ra = rand(1, 5);
     let rc = rand(1, 5);
-    let rb = rand(-6, 6);
-    let rd = rand(-6, 6);
 
-    if (rb === 0 || rd === 0) continue;
+    let rb, rd;
+
+    do {
+      rb = rand(-6, 6);
+      rd = rand(-6, 6);
+    } while (rb === 0 || rd === 0);
 
     opts.add(
       `(${ra}x ${rb >= 0 ? '+ ' + rb : '- ' + Math.abs(rb)})` +
